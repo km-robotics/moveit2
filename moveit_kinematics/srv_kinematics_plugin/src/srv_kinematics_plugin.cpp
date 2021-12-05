@@ -51,8 +51,19 @@ namespace srv_kinematics_plugin
 {
 static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit_srv_kinematics_plugin.srv_kinematics_plugin");
 
-SrvKinematicsPlugin::SrvKinematicsPlugin() : active_(false)
+SrvKinematicsPlugin::SrvKinematicsPlugin()
+  : private_executor_(std::make_shared<rclcpp::executors::SingleThreadedExecutor>())
+  , active_(false)
 {
+  // private node will be created in initialize, because here our main node is not available
+}
+
+SrvKinematicsPlugin::~SrvKinematicsPlugin()
+{
+  private_executor_->cancel();
+  if (private_executor_thread_.joinable())
+    private_executor_thread_.join();
+  private_executor_.reset();
 }
 
 bool SrvKinematicsPlugin::initialize(const rclcpp::Node::SharedPtr& node, const moveit::core::RobotModel& robot_model,
@@ -63,6 +74,18 @@ bool SrvKinematicsPlugin::initialize(const rclcpp::Node::SharedPtr& node, const 
   bool debug = false;
 
   RCLCPP_INFO(LOGGER, "SrvKinematicsPlugin initializing");
+
+  std::vector<std::string> new_args = rclcpp::NodeOptions().arguments();
+  new_args.push_back("--ros-args");
+  new_args.push_back("-r");
+  new_args.push_back(std::string("__node:=") + node_->get_name() + "_private_srvik");
+  new_args.push_back("--");
+  pnode_ = std::make_shared<rclcpp::Node>("_", node_->get_namespace(), rclcpp::NodeOptions().arguments(new_args));
+
+  private_executor_->add_node(pnode_);
+
+  // start executor on a different thread now
+  private_executor_thread_ = std::thread([this]() { private_executor_->spin(); });
 
   storeValues(robot_model, group_name, base_frame, tip_frames, search_discretization);
   joint_model_group_ = robot_model_->getJointModelGroup(group_name);
@@ -118,7 +141,9 @@ bool SrvKinematicsPlugin::initialize(const rclcpp::Node::SharedPtr& node, const 
   robot_state_->setToDefaultValues();
 
   // Create the ROS2 service client
-  ik_service_client_ = node_->create_client<moveit_msgs::srv::GetPositionIK>(ik_service_name);
+  // use a private node to overcome problems with hanging when this is called from another callback
+  RCLCPP_DEBUG(LOGGER, "Creating service client in private node...");
+  ik_service_client_ = pnode_->create_client<moveit_msgs::srv::GetPositionIK>(ik_service_name);
 
   if (!ik_service_client_->wait_for_service(std::chrono::seconds(1)))  // wait 0.1 seconds, blocking
     RCLCPP_WARN_STREAM(LOGGER,
@@ -299,7 +324,7 @@ bool SrvKinematicsPlugin::searchPositionIK(const std::vector<geometry_msgs::msg:
   RCLCPP_DEBUG(LOGGER, "Calling service: %s", ik_service_client_->get_service_name());
   auto result_future = ik_service_client_->async_send_request(ik_srv);
   const auto& response = result_future.get();
-  if (rclcpp::spin_until_future_complete(node_, result_future) == rclcpp::FutureReturnCode::SUCCESS)
+  if (private_executor_->spin_until_future_complete(result_future) == rclcpp::FutureReturnCode::SUCCESS)
   {
     // Check error code
     error_code.val = response->error_code.val;
@@ -367,7 +392,7 @@ bool SrvKinematicsPlugin::searchPositionIK(const std::vector<geometry_msgs::msg:
     }
   }
 
-  RCLCPP_INFO(LOGGER, "IK Solver Succeeded!");
+  RCLCPP_DEBUG(LOGGER, "IK Solver Succeeded!");
   return true;
 }
 
