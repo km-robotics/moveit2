@@ -97,7 +97,7 @@ struct EnvChain3DPlanningData
 
   ~EnvChain3DPlanningData()
   {
-    for (unsigned int i = 0; i < state_ID_to_coord_table_.size(); i++)
+    for (unsigned int i = 0; i < state_ID_to_coord_table_.size(); ++i)
     {
       delete state_ID_to_coord_table_[i];
     }
@@ -107,7 +107,7 @@ struct EnvChain3DPlanningData
   {
     unsigned int val = 0;
 
-    for (size_t i = 0; i < coord.size(); i++)
+    for (size_t i = 0; i < coord.size(); ++i)
       val += intHash(coord[i]) << i;
 
     return intHash(val) & (hash_table_size_ - 1);
@@ -131,7 +131,7 @@ struct EnvChain3DPlanningData
     int* entry = new int[NUMOFINDICES_STATEID2IND];
     memset(entry, -1, NUMOFINDICES_STATEID2IND * sizeof(int));
     state_ID_to_index_mapping_.push_back(entry);
-    if (new_hash_entry->stateID != (int)state_ID_to_index_mapping_.size() - 1)
+    if (new_hash_entry->stateID != static_cast<int>(state_ID_to_index_mapping_.size()) - 1)
     {
       ROS_ERROR_STREAM("Size mismatch between state mappings " << new_hash_entry->stateID << " "
                                                                << state_ID_to_index_mapping_.size());
@@ -142,7 +142,7 @@ struct EnvChain3DPlanningData
   EnvChain3DHashEntry* getHashEntry(const std::vector<int>& coord, int action)
   {
     unsigned int bin = getHashBin(coord);
-    for (unsigned int i = 0; i < coord_to_state_ID_table_[bin].size(); i++)
+    for (unsigned int i = 0; i < coord_to_state_ID_table_[bin].size(); ++i)
     {
       if (coord_to_state_ID_table_[bin][i]->coord == coord)
       {
@@ -156,9 +156,9 @@ struct EnvChain3DPlanningData
                                    std::vector<std::vector<double> >& angle_vector) const
   {
     angle_vector.resize(state_ids.size());
-    for (unsigned int i = 0; i < state_ids.size(); i++)
+    for (unsigned int i = 0; i < state_ids.size(); ++i)
     {
-      if (state_ids[i] > (int)state_ID_to_coord_table_.size() - 1)
+      if (state_ids[i] > static_cast<int>(state_ID_to_coord_table_.size()) - 1)
       {
         return false;
       }
