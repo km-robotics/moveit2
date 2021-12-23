@@ -162,7 +162,7 @@ public:
         const auto start = node_->now();
         do
         {
-          RCLCPP_WARN(LOGGER, "waitForExecution, wait_for");
+          RCLCPP_DEBUG(LOGGER, "waitForExecution, wait_for");
           status = result_future.wait_for(50ms);
           if ((status == std::future_status::timeout) and ((node_->now() - start) > timeout))
           {
