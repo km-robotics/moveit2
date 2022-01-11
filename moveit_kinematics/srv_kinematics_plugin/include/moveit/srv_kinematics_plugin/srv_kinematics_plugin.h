@@ -69,6 +69,8 @@ public:
    *  @brief Default constructor
    */
   SrvKinematicsPlugin();
+  
+  ~SrvKinematicsPlugin();
 
   bool
   getPositionIK(const geometry_msgs::msg::Pose& ik_pose, const std::vector<double>& ik_seed_state,
@@ -127,6 +129,10 @@ public:
   const std::vector<std::string>& getVariableNames() const;
 
 protected:
+  std::shared_ptr<rclcpp::Node> pnode_;
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> private_executor_;
+  std::thread private_executor_thread_;
+  
   bool setRedundantJoints(const std::vector<unsigned int>& redundant_joint_indices) override;
 
 private:
