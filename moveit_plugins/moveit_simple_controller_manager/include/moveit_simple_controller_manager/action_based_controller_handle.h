@@ -45,6 +45,7 @@
 
 namespace moveit_simple_controller_manager
 {
+using namespace std::chrono_literals;
 /*
  * This exist solely to inject addJoint/getJoints into base non-templated class.
  */
@@ -79,7 +80,7 @@ class ActionBasedControllerHandle : public ActionBasedControllerHandleBase
 public:
   ActionBasedControllerHandle(const rclcpp::Node::SharedPtr& node, const std::string& name, const std::string& ns,
                               const std::string& logger_name)
-    : ActionBasedControllerHandleBase(name, logger_name), done_(true), namespace_(ns)
+    : ActionBasedControllerHandleBase(name, logger_name), node_(node), done_(true), namespace_(ns)
   {
     // Creating the action client does not ensure that the action server is actually running. Executing trajectories
     // through the controller handle will fail if the server is not running when an action goal message is sent.
@@ -136,12 +137,31 @@ public:
     }
     else
     {
-      std::future_status status = result_future.wait_for(timeout.to_chrono<std::chrono::duration<double>>());
-      if (status == std::future_status::timeout)
-      {
-        RCLCPP_WARN(LOGGER, "waitForExecution timed out");
-        return false;
-      }
+      const bool use_sim_time = node_->get_parameter("use_sim_time").as_bool();
+            if (use_sim_time)
+            {
+              std::future_status status;
+              const auto start = node_->now();
+              do
+              {
+                RCLCPP_DEBUG(LOGGER, "waitForExecution, wait_for");
+                status = result_future.wait_for(50ms);
+                if ((status == std::future_status::timeout) and ((node_->now() - start) > timeout))
+                {
+                  RCLCPP_WARN(LOGGER, "waitForExecution timed out");
+                  return false;
+                }
+              } while (status == std::future_status::timeout);
+            }
+            else
+            {
+              std::future_status status = result_future.wait_for(timeout.to_chrono<std::chrono::duration<double>>());
+              if (status == std::future_status::timeout)
+              {
+                RCLCPP_WARN(LOGGER, "waitForExecution timed out");
+                return false;
+              }
+            }
     }
     // To accommodate for the delay after the future for the result is ready and the time controllerDoneCallback takes to finish
     result_callback_done->get_future().wait();
@@ -164,6 +184,8 @@ public:
   }
 
 protected:
+  const rclcpp::Node::SharedPtr node_;
+  
   /**
    * @brief Check if the controller's action server is ready to receive action goals.
    * @return True if the action server is ready, false if it is not ready or does not exist.
