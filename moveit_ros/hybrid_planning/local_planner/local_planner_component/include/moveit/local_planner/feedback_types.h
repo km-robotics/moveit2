@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2013, Willow Garage, Inc.
+ *  Copyright (c) 2022, PickNik Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage nor the names of its
+ *   * Neither the name of PickNik Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,33 +32,38 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+/* Author: Andy Zelenak
+   Description: Define the expected local planner feedback types (usually equivalent to failure
+   modes).
+ */
+
 #pragma once
 
-#include <iostream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
-namespace moveit
+namespace moveit::hybrid_planning
 {
-/** \brief Get the current backtrace. This may not work on all compilers */
-void get_backtrace(std::ostream& out);
+/**
+ * \brief Expected feedback types
+ */
+enum LocalFeedbackEnum
+{
+  COLLISION_AHEAD = 1,
+  LOCAL_PLANNER_STUCK = 2
+};
 
-#ifdef __GLIBC__
-#include <execinfo.h>
-void get_backtrace(std::ostream& out)
+[[nodiscard]] constexpr std::string_view toString(const LocalFeedbackEnum& code)
 {
-  void* array[500];
-  size_t size = backtrace(array, 500);
-  char** strings = backtrace_symbols((void* const*)array, size);
-  out << "Backtrace: \n";
-  for (size_t i = 0; i < size; ++i)
+  switch (code)
   {
-    out << "  " << strings[i] << '\n';
+    case COLLISION_AHEAD:
+      return "Collision ahead";
+    case LOCAL_PLANNER_STUCK:
+      return "Local planner is stuck";
+    default:
+      __builtin_unreachable();
   }
-  free(strings);
 }
-#else
-void get_backtrace(std::ostream& out)
-{
-  out << "Unable to get backtrace with the used compiler.\n";
-}
-#endif
-}  // namespace moveit
+}  // namespace moveit::hybrid_planning
