@@ -43,8 +43,6 @@
 #endif
 #include <geometry_msgs/msg/quaternion_stamped.hpp>
 
-#include <moveit/controller_manager/controller_manager.h>
-
 namespace moveit_cpp
 {
 static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.ros_planning_interface.moveit_cpp");
@@ -272,8 +270,7 @@ bool MoveItCpp::execute(const std::string& group_name, const robot_trajectory::R
   {
     trajectory_execution_manager_->push(robot_trajectory_msg);
     trajectory_execution_manager_->execute();
-
-    return (trajectory_execution_manager_->waitForExecution() == moveit_controller_manager::ExecutionStatus::SUCCEEDED);
+    return trajectory_execution_manager_->waitForExecution();
   }
   trajectory_execution_manager_->pushAndExecute(robot_trajectory_msg);
   return true;
