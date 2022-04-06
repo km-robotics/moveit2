@@ -173,7 +173,7 @@ bool MotionPlanningFrame::computeCartesianPlan()
 bool MotionPlanningFrame::computeJointSpacePlan()
 {
   current_plan_ = std::make_shared<moveit::planning_interface::MoveGroupInterface::Plan>();
-  return move_group_->plan(*current_plan_) == moveit::planning_interface::MoveItErrorCode::SUCCESS;
+  return move_group_->plan(*current_plan_) == moveit::core::MoveItErrorCode::SUCCESS;
 }
 
 void MotionPlanningFrame::computePlanButtonClicked()
@@ -210,7 +210,7 @@ void MotionPlanningFrame::computeExecuteButtonClicked()
   if (mgi && current_plan_)
   {
     ui_->stop_button->setEnabled(true);  // enable stopping
-    bool success = mgi->execute(*current_plan_) == moveit::planning_interface::MoveItErrorCode::SUCCESS;
+    bool success = mgi->execute(*current_plan_) == moveit::core::MoveItErrorCode::SUCCESS;
     onFinishedExecution(success);
   }
 }
@@ -232,7 +232,7 @@ void MotionPlanningFrame::computePlanAndExecuteButtonClicked()
   }
   else
   {
-    bool success = move_group_->move() == moveit::planning_interface::MoveItErrorCode::SUCCESS;
+    bool success = move_group_->move() == moveit::core::MoveItErrorCode::SUCCESS;
     onFinishedExecution(success);
   }
   ui_->plan_and_execute_button->setEnabled(true);
@@ -608,7 +608,7 @@ void MotionPlanningFrame::remoteUpdateCustomStartStateCallback(const moveit_msgs
     const planning_scene_monitor::LockedPlanningSceneRO& ps = planning_display_->getPlanningSceneRO();
     if (ps)
     {
-      moveit::core::RobotStatePtr state(new moveit::core::RobotState(ps->getCurrentState()));
+      auto state = std::make_shared<moveit::core::RobotState>(ps->getCurrentState());
       moveit::core::robotStateMsgToRobotState(ps->getTransforms(), msg_no_attached, *state);
       planning_display_->setQueryStartState(*state);
     }
@@ -626,7 +626,7 @@ void MotionPlanningFrame::remoteUpdateCustomGoalStateCallback(const moveit_msgs:
     const planning_scene_monitor::LockedPlanningSceneRO& ps = planning_display_->getPlanningSceneRO();
     if (ps)
     {
-      moveit::core::RobotStatePtr state(new moveit::core::RobotState(ps->getCurrentState()));
+      auto state = std::make_shared<moveit::core::RobotState>(ps->getCurrentState());
       moveit::core::robotStateMsgToRobotState(ps->getTransforms(), msg_no_attached, *state);
       planning_display_->setQueryGoalState(*state);
     }
