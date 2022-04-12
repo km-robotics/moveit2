@@ -65,6 +65,8 @@ bool CommandPlanner::initialize(const moveit::core::RobotModelConstPtr& model, c
   model_ = model;
   namespace_ = ns;
 
+  loadPlannerConfigurations();
+
   // Obtain the aggregated joint limits
   aggregated_limit_active_joints_ = pilz_industrial_motion_planner::JointLimitsAggregator::getAggregatedLimits(
       node, PARAM_NAMESPACE_LIMITS, model->getActiveJointModels());
@@ -79,13 +81,19 @@ bool CommandPlanner::initialize(const moveit::core::RobotModelConstPtr& model, c
 
   // List available plugins
   const std::vector<std::string>& factories = planner_context_loader->getDeclaredClasses();
-  std::stringstream ss;
-  for (const auto& factory : factories)
+  if (factories.empty())
   {
-    ss << factory << " ";
+    RCLCPP_WARN(LOGGER, "No available plugins");
   }
-
-  RCLCPP_INFO_STREAM(LOGGER, "Available plugins: " << ss.str());
+  else
+  {
+    std::ostringstream ss;
+    for (const auto& factory : factories)
+    {
+      ss << factory << " ";
+    }
+    RCLCPP_INFO(LOGGER, "Available plugins: %s", ss.str().c_str());
+  }
 
   // Load each factory
   for (const auto& factory : factories)
@@ -104,6 +112,22 @@ bool CommandPlanner::initialize(const moveit::core::RobotModelConstPtr& model, c
   }
 
   return true;
+}
+
+void CommandPlanner::loadPlannerConfigurations()
+{
+  // Create a planning configuration for each group.
+  // There is not parameter to load.
+  planning_interface::PlannerConfigurationMap config;
+  for (const std::string& group_name : model_->getJointModelGroupNames())
+  {
+    planning_interface::PlannerConfigurationSettings settings{};
+    settings.group = group_name;
+    settings.name = group_name;
+    config[group_name] = settings;
+  }
+
+  setPlannerConfigurations(config);
 }
 
 std::string CommandPlanner::getDescription() const
@@ -133,8 +157,8 @@ CommandPlanner::getPlanningContext(const planning_scene::PlanningSceneConstPtr& 
   // Check that a loaded for this request exists
   if (!canServiceRequest(req))
   {
-    RCLCPP_ERROR_STREAM(LOGGER, "No ContextLoader for planner_id " << req.planner_id.c_str()
-                                                                   << " found. Planning not possible.");
+    RCLCPP_ERROR_STREAM(LOGGER, "No ContextLoader for planner_id '" << req.planner_id.c_str()
+                                                                    << "' found. Planning not possible.");
     return nullptr;
   }
 

@@ -114,7 +114,7 @@ public:
    */
   [[deprecated("Passing tf2_ros::Buffer to PlanningSceneMonitor's constructor is deprecated")]] PlanningSceneMonitor(
       const rclcpp::Node::SharedPtr& node, const std::string& robot_description,
-      const std::shared_ptr<tf2_ros::Buffer>& tf_buffer, const std::string& name = "")
+      const std::shared_ptr<tf2_ros::Buffer>& /* unused */, const std::string& name = "")
     : PlanningSceneMonitor(node, robot_description, name)
   {
   }
@@ -128,7 +128,7 @@ public:
    */
   [[deprecated("Passing tf2_ros::Buffer to PlanningSceneMonitor's constructor is deprecated")]] PlanningSceneMonitor(
       const rclcpp::Node::SharedPtr& node, const robot_model_loader::RobotModelLoaderPtr& rml,
-      const std::shared_ptr<tf2_ros::Buffer>& tf_buffer, const std::string& name = "")
+      const std::shared_ptr<tf2_ros::Buffer>& /* unused */, const std::string& name = "")
     : PlanningSceneMonitor(node, rml, name)
   {
   }
@@ -143,7 +143,7 @@ public:
    */
   [[deprecated("Passing tf2_ros::Buffer to PlanningSceneMonitor's constructor is deprecated")]] PlanningSceneMonitor(
       const rclcpp::Node::SharedPtr& node, const planning_scene::PlanningScenePtr& scene,
-      const std::string& robot_description, const std::shared_ptr<tf2_ros::Buffer>& tf_buffer,
+      const std::string& robot_description, const std::shared_ptr<tf2_ros::Buffer>& /* unused */,
       const std::string& name = "")
     : PlanningSceneMonitor(node, scene, robot_description, name)
   {
@@ -159,7 +159,7 @@ public:
    */
   [[deprecated("Passing tf2_ros::Buffer to PlanningSceneMonitor's constructor is deprecated")]] PlanningSceneMonitor(
       const rclcpp::Node::SharedPtr& node, const planning_scene::PlanningScenePtr& scene,
-      const robot_model_loader::RobotModelLoaderPtr& rml, const std::shared_ptr<tf2_ros::Buffer>& tf_buffer,
+      const robot_model_loader::RobotModelLoaderPtr& rml, const std::shared_ptr<tf2_ros::Buffer>& /* unused */,
       const std::string& name = "")
     : PlanningSceneMonitor(node, scene, rml, name)
   {
@@ -404,6 +404,17 @@ public:
    */
   bool waitForCurrentRobotState(const rclcpp::Time& t, double wait_time = 1.);
 
+  void clearOctomap();
+
+  // Called to update the planning scene with a new message.
+  bool newPlanningSceneMessage(const moveit_msgs::msg::PlanningScene& scene);
+
+protected:
+  /** @brief Initialize the planning scene monitor
+   *  @param scene The scene instance to fill with data (an instance is allocated if the one passed in is not allocated)
+   */
+  void initialize(const planning_scene::PlanningScenePtr& scene);
+
   /** \brief Lock the scene for reading (multiple threads can lock for reading at the same time) */
   void lockSceneRead();
 
@@ -417,17 +428,6 @@ public:
   /** \brief Lock the scene from writing (only one thread can lock for writing and no other thread can lock for reading)
    */
   void unlockSceneWrite();
-
-  void clearOctomap();
-
-  // Called to update the planning scene with a new message.
-  bool newPlanningSceneMessage(const moveit_msgs::msg::PlanningScene& scene);
-
-protected:
-  /** @brief Initialize the planning scene monitor
-   *  @param scene The scene instance to fill with data (an instance is allocated if the one passed in is not allocated)
-   */
-  void initialize(const planning_scene::PlanningScenePtr& scene);
 
   /** @brief Configure the collision matrix for a particular scene */
   void configureCollisionMatrix(const planning_scene::PlanningScenePtr& scene);
@@ -606,6 +606,9 @@ private:
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr callback_handler_;
 
   bool use_sim_time_;
+
+  friend class LockedPlanningSceneRO;
+  friend class LockedPlanningSceneRW;
 };
 
 /** \brief This is a convenience class for obtaining access to an
@@ -648,7 +651,7 @@ public:
     return planning_scene_monitor_ && planning_scene_monitor_->getPlanningScene();
   }
 
-  operator const planning_scene::PlanningSceneConstPtr &() const
+  operator const planning_scene::PlanningSceneConstPtr&() const
   {
     return static_cast<const PlanningSceneMonitor*>(planning_scene_monitor_.get())->getPlanningScene();
   }
@@ -729,7 +732,7 @@ public:
   {
   }
 
-  operator const planning_scene::PlanningScenePtr &()
+  operator const planning_scene::PlanningScenePtr&()
   {
     return planning_scene_monitor_->getPlanningScene();
   }

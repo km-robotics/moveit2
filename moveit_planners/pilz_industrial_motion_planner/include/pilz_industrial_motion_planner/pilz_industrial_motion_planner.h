@@ -135,6 +135,9 @@ private:
 
   /// cartesian limit
   pilz_industrial_motion_planner::CartesianLimit cartesian_limit_;
+
+  /** @brief Configure the planners */
+  void loadPlannerConfigurations();
 };
 
 MOVEIT_CLASS_FORWARD(CommandPlanner);

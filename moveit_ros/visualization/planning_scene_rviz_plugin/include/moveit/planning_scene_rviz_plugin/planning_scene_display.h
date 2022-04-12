@@ -43,7 +43,7 @@
 #ifndef Q_MOC_RUN
 #include <moveit/rviz_plugin_render_tools/planning_scene_render.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-#include <moveit/background_processing/background_processing.h>
+#include <moveit/planning_scene_rviz_plugin/background_processing.hpp>
 #include <rclcpp/rclcpp.hpp>
 #endif
 
@@ -146,7 +146,7 @@ protected:
 
   /// This function is used by loadRobotModel() and should only be called in the MainLoop
   /// You probably should not call this function directly
-  void clearRobotModel();
+  virtual void clearRobotModel();
 
   /// This function constructs a new planning scene. Probably this should be called in a background thread
   /// as it may take some time to complete its execution

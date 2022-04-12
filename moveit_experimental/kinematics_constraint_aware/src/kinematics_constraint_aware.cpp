@@ -45,7 +45,7 @@
 #else
 #include <tf2_eigen/tf2_eigen.h>
 #endif
-#include <boost/bind.hpp>
+#include <functional>
 
 namespace kinematics_constraint_aware
 {
@@ -55,7 +55,7 @@ KinematicsConstraintAware::KinematicsConstraintAware(const moveit::core::RobotMo
   if (!kinematic_model->hasJointModelGroup(group_name))
   {
     ROS_ERROR_NAMED("kinematics_constraint_aware", "The group %s does not exist", group_name.c_str());
-    joint_model_group_ = NULL;
+    joint_model_group_ = nullptr;
     return;
   }
   kinematic_model_ = kinematic_model;
@@ -90,13 +90,13 @@ KinematicsConstraintAware::KinematicsConstraintAware(const moveit::core::RobotMo
       }
       else
       {
-        joint_model_group_ = NULL;
+        joint_model_group_ = nullptr;
         return;
       }
     }
     else
     {
-      joint_model_group_ = NULL;
+      joint_model_group_ = nullptr;
       ROS_INFO_NAMED("kinematics_constraint_aware", "No solver allocated for group %s", group_name.c_str());
     }
     has_sub_groups_ = true;
@@ -165,7 +165,8 @@ bool KinematicsConstraintAware::getIK(const planning_scene::PlanningSceneConstPt
       transformPoses(planning_scene, kinematic_state, request.pose_stamped_vector_, kinematic_model_->getModelFrame());
 
   moveit::core::StateValidityCallbackFn constraint_callback_fn =
-      boost::bind(&KinematicsConstraintAware::validityCallbackFn, this, planning_scene, request, response, _1, _2);
+      std::bind(&KinematicsConstraintAware::validityCallbackFn, this, planning_scene, request, response,
+                std::placeholders::_1, std::placeholders::_2);
 
   bool result = false;
   if (has_sub_groups_)

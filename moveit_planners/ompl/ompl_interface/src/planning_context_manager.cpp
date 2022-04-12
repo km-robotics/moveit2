@@ -36,7 +36,7 @@
 
 #include <moveit/ompl_interface/planning_context_manager.h>
 #include <moveit/robot_state/conversions.h>
-#include <moveit/profiler/profiler.h>
+
 #include <utility>
 
 #include <ompl/geometric/planners/AnytimePathShortening.h>
@@ -308,9 +308,9 @@ void PlanningContextManager::registerDefaultPlanners()
 
 void PlanningContextManager::registerDefaultStateSpaces()
 {
-  registerStateSpaceFactory(ModelBasedStateSpaceFactoryPtr(new JointModelStateSpaceFactory()));
-  registerStateSpaceFactory(ModelBasedStateSpaceFactoryPtr(new PoseModelStateSpaceFactory()));
-  registerStateSpaceFactory(ModelBasedStateSpaceFactoryPtr(new ConstrainedPlanningStateSpaceFactory()));
+  registerStateSpaceFactory(std::make_shared<JointModelStateSpaceFactory>());
+  registerStateSpaceFactory(std::make_shared<PoseModelStateSpaceFactory>());
+  registerStateSpaceFactory(std::make_shared<ConstrainedPlanningStateSpaceFactory>());
 }
 
 ConfiguredPlannerSelector PlanningContextManager::getPlannerSelector() const

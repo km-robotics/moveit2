@@ -407,7 +407,7 @@ struct FCLShapeCache
   unsigned int clean_count_;
 };
 
-bool distanceCallback(fcl::CollisionObjectd* o1, fcl::CollisionObjectd* o2, void* data, double& min_dist)
+bool distanceCallback(fcl::CollisionObjectd* o1, fcl::CollisionObjectd* o2, void* data, double& /*min_dist*/)
 {
   DistanceData* cdata = reinterpret_cast<DistanceData*>(data);
 
@@ -857,7 +857,7 @@ FCLGeometryConstPtr createCollisionGeometry(const shapes::ShapeConstPtr& shape, 
   if (cg_g)
   {
     cg_g->computeLocalAABB();
-    FCLGeometryConstPtr res(new FCLGeometry(cg_g, data, shape_index));
+    FCLGeometryConstPtr res = std::make_shared<const FCLGeometry>(cg_g, data, shape_index);
     cache.map_[wptr] = res;
     cache.bumpUseCount();
     return res;

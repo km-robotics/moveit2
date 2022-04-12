@@ -158,7 +158,7 @@ void MoveGroupKinematicsService::computeIK(moveit_msgs::msg::PositionIKRequest& 
     error_code.val = moveit_msgs::msg::MoveItErrorCodes::INVALID_GROUP_NAME;
 }
 
-bool MoveGroupKinematicsService::computeIKService(const std::shared_ptr<rmw_request_id_t> request_header,
+bool MoveGroupKinematicsService::computeIKService(const std::shared_ptr<rmw_request_id_t> /* unused */,
                                                   const std::shared_ptr<moveit_msgs::srv::GetPositionIK::Request> req,
                                                   std::shared_ptr<moveit_msgs::srv::GetPositionIK::Response> res)
 {
@@ -172,12 +172,12 @@ bool MoveGroupKinematicsService::computeIKService(const std::shared_ptr<rmw_requ
     moveit::core::RobotState rs = ls->getCurrentState();
     kset.add(req->ik_request.constraints, ls->getTransforms());
     computeIK(req->ik_request, res->solution, res->error_code, rs,
-              boost::bind(&isIKSolutionValid,
-                          req->ik_request.avoid_collisions ?
-                              static_cast<const planning_scene::PlanningSceneConstPtr&>(ls).get() :
-                              nullptr,
-                          kset.empty() ? nullptr : &kset, boost::placeholders::_1, boost::placeholders::_2,
-                          boost::placeholders::_3));
+              std::bind(&isIKSolutionValid,
+                        req->ik_request.avoid_collisions ?
+                            static_cast<const planning_scene::PlanningSceneConstPtr&>(ls).get() :
+                            nullptr,
+                        kset.empty() ? nullptr : &kset, std::placeholders::_1, std::placeholders::_2,
+                        std::placeholders::_3));
   }
   else
   {
@@ -190,7 +190,7 @@ bool MoveGroupKinematicsService::computeIKService(const std::shared_ptr<rmw_requ
   return true;
 }
 
-bool MoveGroupKinematicsService::computeFKService(const std::shared_ptr<rmw_request_id_t> request_header,
+bool MoveGroupKinematicsService::computeFKService(const std::shared_ptr<rmw_request_id_t> /* unused */,
                                                   const std::shared_ptr<moveit_msgs::srv::GetPositionFK::Request> req,
                                                   std::shared_ptr<moveit_msgs::srv::GetPositionFK::Response> res)
 {

@@ -466,7 +466,7 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testComputePoseIKInvalidFrameId)
 //
 //   std::vector<double> ik_state;
 //   std::transform(ik_actual1.begin(), ik_actual1.end(), std::back_inserter(ik_state),
-//                  boost::bind(&std::map<std::string, double>::value_type::second, _1));
+//                  std::bind(&std::map<std::string, double>::value_type::second, std::placeholders::_1));
 //
 //   rstate.setJointGroupPositions(jmg, ik_state);
 //   rstate.update();
@@ -487,7 +487,7 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testComputePoseIKInvalidFrameId)
 //
 //   std::vector<double> ik_state2;
 //   std::transform(ik_actual2.begin(), ik_actual2.end(), std::back_inserter(ik_state2),
-//                  boost::bind(&std::map<std::string, double>::value_type::second, _1));
+//                  std::bind(&std::map<std::string, double>::value_type::second, std::placeholders::_1));
 //   rstate.setJointGroupPositions(jmg, ik_state2);
 //   rstate.update();
 //
@@ -576,7 +576,7 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testVerifySampleJointLimitsVeloc
   double duration_last{ 0.0 };
   pilz_industrial_motion_planner::JointLimitsContainer joint_limits;
 
-  JointLimit test_joint_limits;
+  pilz_industrial_motion_planner::JointLimit test_joint_limits;
   // Calculate the max allowed velocity in such a way that it is always smaller
   // than the current velocity.
   test_joint_limits.max_velocity =
@@ -612,7 +612,7 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testVerifySampleJointLimitsAccel
   std::map<std::string, double> velocity_last{ { test_joint_name, 9.0 } };
   pilz_industrial_motion_planner::JointLimitsContainer joint_limits;
 
-  JointLimit test_joint_limits;
+  pilz_industrial_motion_planner::JointLimit test_joint_limits;
   // Calculate the max allowed velocity in such a way that it is always bigger
   // than the current velocity.
   test_joint_limits.max_velocity = velocity_current + 1.0;
@@ -655,7 +655,7 @@ TEST_F(TrajectoryFunctionsTestFlangeAndGripper, testVerifySampleJointLimitsDecel
   std::map<std::string, double> velocity_last{ { test_joint_name, 19.0 } };
   pilz_industrial_motion_planner::JointLimitsContainer joint_limits;
 
-  JointLimit test_joint_limits;
+  pilz_industrial_motion_planner::JointLimit test_joint_limits;
   // Calculate the max allowed velocity in such a way that it is always bigger
   // than the current velocity.
   test_joint_limits.max_velocity = fabs(velocity_current) + 1.0;

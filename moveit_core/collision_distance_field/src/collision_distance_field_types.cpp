@@ -55,7 +55,7 @@ std::vector<CollisionSphere> determineCollisionSpheres(const bodies::Body* body,
   body->computeBoundingCylinder(cyl);
   unsigned int num_points = ceil(cyl.length / (cyl.radius / 2.0));
   double spacing = cyl.length / ((num_points * 1.0) - 1.0);
-  relative_transform = body->getPose().inverse() * cyl.pose;
+  relative_transform = cyl.pose;
 
   for (unsigned int i = 1; i < num_points - 1; ++i)
   {
@@ -430,7 +430,7 @@ void getCollisionSphereMarkers(const std_msgs::msg::ColorRGBA& color, const std:
   }
 }
 
-void getProximityGradientMarkers(const std::string& frame_id, const std::string& ns, const rclcpp::Duration& dur,
+void getProximityGradientMarkers(const std::string& frame_id, const std::string& ns, const rclcpp::Duration& /*dur*/,
                                  const std::vector<PosedBodySphereDecompositionPtr>& posed_decompositions,
                                  const std::vector<PosedBodySphereDecompositionVectorPtr>& posed_vector_decompositions,
                                  const std::vector<GradientInfo>& gradients, visualization_msgs::msg::MarkerArray& arr)
@@ -530,7 +530,7 @@ void getProximityGradientMarkers(const std::string& frame_id, const std::string&
   }
 }
 
-void getCollisionMarkers(const std::string& frame_id, const std::string& ns, const rclcpp::Duration& dur,
+void getCollisionMarkers(const std::string& frame_id, const std::string& ns, const rclcpp::Duration& /*dur*/,
                          const std::vector<PosedBodySphereDecompositionPtr>& posed_decompositions,
                          const std::vector<PosedBodySphereDecompositionVectorPtr>& posed_vector_decompositions,
                          const std::vector<GradientInfo>& gradients, visualization_msgs::msg::MarkerArray& arr)

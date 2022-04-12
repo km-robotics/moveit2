@@ -87,7 +87,7 @@ void MoveGroupCartesianPathService::initialize()
       CARTESIAN_PATH_SERVICE_NAME, std::bind(&MoveGroupCartesianPathService::computeService, this, _1, _2, _3));
 }
 
-bool MoveGroupCartesianPathService::computeService(const std::shared_ptr<rmw_request_id_t> request_header,
+bool MoveGroupCartesianPathService::computeService(const std::shared_ptr<rmw_request_id_t> /* unused */,
                                                    const std::shared_ptr<moveit_msgs::srv::GetCartesianPath::Request> req,
                                                    std::shared_ptr<moveit_msgs::srv::GetCartesianPath::Response> res)
 {
@@ -150,11 +150,11 @@ bool MoveGroupCartesianPathService::computeService(const std::shared_ptr<rmw_req
             ls = std::make_unique<planning_scene_monitor::LockedPlanningSceneRO>(context_->planning_scene_monitor_);
             kset = std::make_unique<kinematic_constraints::KinematicConstraintSet>((*ls)->getRobotModel());
             kset->add(req->path_constraints, (*ls)->getTransforms());
-            constraint_fn = boost::bind(
+            constraint_fn = std::bind(
                 &isStateValid,
                 req->avoid_collisions ? static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get() : nullptr,
-                kset->empty() ? nullptr : kset.get(), boost::placeholders::_1, boost::placeholders::_2,
-                boost::placeholders::_3);
+                kset->empty() ? nullptr : kset.get(), std::placeholders::_1, std::placeholders::_2,
+                std::placeholders::_3);
           }
           bool global_frame = !moveit::core::Transforms::sameFrame(link_name, req->header.frame_id);
           RCLCPP_INFO(LOGGER,
