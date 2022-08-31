@@ -34,34 +34,35 @@
 
 #pragma once
 
-#include "pilz_industrial_motion_planner/limits_container.h"
-
-#include <rclcpp/rclcpp.hpp>
+#include "pilz_industrial_motion_planner/planning_context_loader.h"
 
 #include <moveit/planning_interface/planning_interface.h>
-#include <moveit/planning_interface/planning_response.h>
-
-#include <atomic>
-#include <thread>
-
-#include "pilz_industrial_motion_planner/planning_context_base.h"
-#include "pilz_industrial_motion_planner/trajectory_generator_lin.h"
 
 namespace pilz_industrial_motion_planner
 {
-MOVEIT_CLASS_FORWARD(PlanningContext);
-
 /**
- * @brief PlanningContext for obtaining LIN trajectories
+ * @brief Plugin that can generate instances of PlanningContextLINI.
+ * Generates instances of PlanningContextLINI.
  */
-class PlanningContextLIN : public pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>
+class PlanningContextLoaderLINI : public PlanningContextLoader
 {
 public:
-  PlanningContextLIN(const std::string& name, const std::string& group, const moveit::core::RobotModelConstPtr& model,
-                     const pilz_industrial_motion_planner::LimitsContainer& limits)
-    : pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>(name, group, model, limits)
-  {
-  }
+  PlanningContextLoaderLINI();
+  ~PlanningContextLoaderLINI() override;
+
+  /**
+   * @brief return a instance of
+   * pilz_industrial_motion_planner::PlanningContextLINI
+   * @param planning_context returned context
+   * @param name
+   * @param group
+   * @return true on success, false otherwise
+   */
+  bool loadContext(planning_interface::PlanningContextPtr& planning_context, const std::string& name,
+                   const std::string& group) const override;
 };
+
+typedef boost::shared_ptr<PlanningContextLoaderLINI> PlanningContextLoaderLINIPtr;
+typedef boost::shared_ptr<const PlanningContextLoaderLINI> PlanningContextLoaderLINIConstPtr;
 
 }  // namespace pilz_industrial_motion_planner

@@ -141,6 +141,14 @@ add_library(planning_context_loader_lin SHARED
 ament_target_dependencies(planning_context_loader_lin ${THIS_PACKAGE_INCLUDE_DEPENDS})
 target_link_libraries(planning_context_loader_lin planning_context_loader_base joint_limits_common trajectory_generation_common)
 
+add_library(planning_context_loader_lini SHARED
+  src/planning_context_loader_lini.cpp
+  src/trajectory_generator_lini.cpp
+  src/velocity_profile_atrap.cpp
+)
+ament_target_dependencies(planning_context_loader_lini ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(planning_context_loader_lini planning_context_loader_base joint_limits_common trajectory_generation_common)
+
 add_library(planning_context_loader_circ SHARED
   src/planning_context_loader_circ.cpp
   src/trajectory_generator_circ.cpp

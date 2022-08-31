@@ -45,21 +45,21 @@
 #include <thread>
 
 #include "pilz_industrial_motion_planner/planning_context_base.h"
-#include "pilz_industrial_motion_planner/trajectory_generator_lin.h"
+#include "pilz_industrial_motion_planner/trajectory_generator_lini.h"
 
 namespace pilz_industrial_motion_planner
 {
 MOVEIT_CLASS_FORWARD(PlanningContext);
 
 /**
- * @brief PlanningContext for obtaining LIN trajectories
+ * @brief PlanningContext for obtaining LINI trajectories
  */
-class PlanningContextLIN : public pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>
+class PlanningContextLINI : public pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLINI>
 {
 public:
-  PlanningContextLIN(const std::string& name, const std::string& group, const moveit::core::RobotModelConstPtr& model,
-                     const pilz_industrial_motion_planner::LimitsContainer& limits)
-    : pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>(name, group, model, limits)
+  PlanningContextLINI(const std::string& name, const std::string& group, const moveit::core::RobotModelConstPtr& model,
+                      const pilz_industrial_motion_planner::LimitsContainer& limits)
+    : pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLINI>(name, group, model, limits)
   {
   }
 };

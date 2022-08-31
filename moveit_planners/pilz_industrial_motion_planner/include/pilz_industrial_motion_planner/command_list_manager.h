@@ -85,7 +85,7 @@ public:
    *
    * @param planning_scene The planning scene to be used for trajectory
    * generation.
-   * @param req_list List of motion requests containing: PTP, LIN, CIRC
+   * @param req_list List of motion requests containing: PTP, LIN, LINI, CIRC
    * and/or gripper commands.
    * Please note: A request is only valid if:
    *    - All blending radii are non negative.

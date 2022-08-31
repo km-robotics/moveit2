@@ -13,6 +13,13 @@
       <description>Loader for LIN Context</description>
     </class>
   </library>
+  <library path="planning_context_loader_lini">
+    <class name="pilz_industrial_motion_planner/PlanningContextLoaderLINI"
+           type="pilz_industrial_motion_planner::PlanningContextLoaderLINI"
+           base_class_type="pilz_industrial_motion_planner::PlanningContextLoader">
+    <description>Loader for LINI Context</description>
+    </class>
+  </library>
   <library path="planning_context_loader_circ">
     <class name="pilz_industrial_motion_planner/PlanningContextLoaderCIRC"
            type="pilz_industrial_motion_planner::PlanningContextLoaderCIRC"

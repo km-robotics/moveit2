@@ -32,36 +32,49 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#pragma once
-
-#include "pilz_industrial_motion_planner/limits_container.h"
-
-#include <rclcpp/rclcpp.hpp>
-
-#include <moveit/planning_interface/planning_interface.h>
-#include <moveit/planning_interface/planning_response.h>
-
-#include <atomic>
-#include <thread>
-
+#include "pilz_industrial_motion_planner/planning_context_loader_lini.h"
+#include "moveit/planning_scene/planning_scene.h"
 #include "pilz_industrial_motion_planner/planning_context_base.h"
-#include "pilz_industrial_motion_planner/trajectory_generator_lin.h"
+#include "pilz_industrial_motion_planner/planning_context_lini.h"
 
-namespace pilz_industrial_motion_planner
-{
-MOVEIT_CLASS_FORWARD(PlanningContext);
+#include <pluginlib/class_list_macros.hpp>
 
-/**
- * @brief PlanningContext for obtaining LIN trajectories
- */
-class PlanningContextLIN : public pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>
+namespace
 {
-public:
-  PlanningContextLIN(const std::string& name, const std::string& group, const moveit::core::RobotModelConstPtr& model,
-                     const pilz_industrial_motion_planner::LimitsContainer& limits)
-    : pilz_industrial_motion_planner::PlanningContextBase<TrajectoryGeneratorLIN>(name, group, model, limits)
+static const rclcpp::Logger LOGGER =
+    rclcpp::get_logger("moveit.pilz_industrial_motion_planner.planning_context_loader_lini");
+}
+
+pilz_industrial_motion_planner::PlanningContextLoaderLINI::PlanningContextLoaderLINI()
+{
+  alg_ = "LINI";
+}
+
+pilz_industrial_motion_planner::PlanningContextLoaderLINI::~PlanningContextLoaderLINI()
+{
+}
+
+bool pilz_industrial_motion_planner::PlanningContextLoaderLINI::loadContext(
+    planning_interface::PlanningContextPtr& planning_context, const std::string& name, const std::string& group) const
+{
+  if (limits_set_ && model_set_)
   {
+    planning_context = std::make_shared<PlanningContextLINI>(name, group, model_, limits_);
+    return true;
   }
-};
+  else
+  {
+    if (!limits_set_)
+    {
+      RCLCPP_ERROR_STREAM(LOGGER, "Limits are not defined. Cannot load planning context. Call setLimits loadContext");
+    }
+    if (!model_set_)
+    {
+      RCLCPP_ERROR_STREAM(LOGGER, "Robot model was not set");
+    }
+    return false;
+  }
+}
 
-}  // namespace pilz_industrial_motion_planner
+PLUGINLIB_EXPORT_CLASS(pilz_industrial_motion_planner::PlanningContextLoaderLINI,
+                       pilz_industrial_motion_planner::PlanningContextLoader)
