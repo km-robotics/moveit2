@@ -160,6 +160,9 @@ public:
   /** \brief Run a plan from start or current state to fulfill the last goal constraints provided by setGoal() using the
    * provided PlanRequestParameters. */
   PlanSolution plan(const PlanRequestParameters& parameters);
+  /** \brief Run a plan from start or current state to fulfill the last goal constraints provided by setGoal() using the
+   * provided PlanRequestParameters and PlanningScenePtr. */
+  PlanSolution plan(const PlanRequestParameters& parameters, const planning_scene::PlanningScenePtr planning_scene);
 
   /** \brief Execute the latest computed solution trajectory computed by plan(). By default this function terminates
    * after the execution is complete. The execution can be run in background by setting blocking to false. */

@@ -115,14 +115,6 @@ bool PlanningComponent::setPathConstraints(const moveit_msgs::msg::Constraints& 
 
 PlanningComponent::PlanSolution PlanningComponent::plan(const PlanRequestParameters& parameters)
 {
-  last_plan_solution_ = std::make_shared<PlanSolution>();
-  if (!joint_model_group_)
-  {
-    RCLCPP_ERROR(LOGGER, "Failed to retrieve joint model group for name '%s'.", group_name_.c_str());
-    last_plan_solution_->error_code = moveit::core::MoveItErrorCode::INVALID_GROUP_NAME;
-    return *last_plan_solution_;
-  }
-
   // Clone current planning scene
   planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor =
       moveit_cpp_->getPlanningSceneMonitorNonConst();
@@ -132,6 +124,25 @@ PlanningComponent::PlanSolution PlanningComponent::plan(const PlanRequestParamet
     return planning_scene::PlanningScene::clone(ls);
   }();
   planning_scene_monitor.reset();  // release this pointer
+
+  return plan(parameters, planning_scene);
+}
+
+PlanningComponent::PlanSolution PlanningComponent::plan(const PlanRequestParameters& parameters, const planning_scene::PlanningScenePtr planning_scene)
+{
+  last_plan_solution_ = std::make_shared<PlanSolution>();
+  if (!joint_model_group_)
+  {
+    RCLCPP_ERROR(LOGGER, "Failed to retrieve joint model group for name '%s'.", group_name_.c_str());
+    last_plan_solution_->error_code = moveit::core::MoveItErrorCode::INVALID_GROUP_NAME;
+    return *last_plan_solution_;
+  }
+  if (!planning_scene)
+  {
+    RCLCPP_ERROR(LOGGER, "Given planning scene pointer is invalid.");
+    last_plan_solution_->error_code = moveit::core::MoveItErrorCode::FAILURE;
+    return *last_plan_solution_;
+  }
 
   // Init MotionPlanRequest
   ::planning_interface::MotionPlanRequest req;
@@ -178,7 +189,7 @@ PlanningComponent::PlanSolution PlanningComponent::plan(const PlanRequestParamet
   last_plan_solution_->error_code = res.error_code_.val;
   if (res.error_code_.val != res.error_code_.SUCCESS)
   {
-    RCLCPP_ERROR(LOGGER, "Could not compute plan successfully");
+    RCLCPP_ERROR_STREAM(LOGGER, "Could not compute plan successfully in planning scene \"" << planning_scene->getName() << "\"");
     return *last_plan_solution_;
   }
   last_plan_solution_->start_state = req.start_state;
