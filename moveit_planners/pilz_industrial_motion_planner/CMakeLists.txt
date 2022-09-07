@@ -180,6 +180,7 @@ install(
     planning_context_loader_base
     planning_context_loader_ptp
     planning_context_loader_lin
+    planning_context_loader_lini
     planning_context_loader_circ
     command_list_manager
     sequence_capability

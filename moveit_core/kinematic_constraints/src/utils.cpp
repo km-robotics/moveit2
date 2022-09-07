@@ -77,8 +77,11 @@ moveit_msgs::msg::Constraints mergeConstraints(const moveit_msgs::msg::Constrain
         double high = std::min(a.position + a.tolerance_above, b.position + b.tolerance_above);
         if (low > high)
         {
-          RCLCPP_ERROR(LOGGER, "Attempted to merge incompatible constraints for joint '%s'. Discarding constraint.",
-                       a.joint_name.c_str());
+          RCLCPP_ERROR_STREAM(LOGGER, "Attempted to merge incompatible constraints for joint '"
+                                          << a.joint_name << "' (" << (a.position - a.tolerance_below) << " < j < "
+                                          << (a.position + a.tolerance_above) << ") incompatible with ("
+                                          << (b.position - b.tolerance_below) << " < j < "
+                                          << (b.position + b.tolerance_above) << "). Discarding constraint.");
         }
         else
         {

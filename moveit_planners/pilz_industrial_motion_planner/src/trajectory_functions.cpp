@@ -49,7 +49,15 @@
 namespace
 {
 static const rclcpp::Logger LOGGER = rclcpp::get_logger("moveit.pilz_industrial_motion_planner.trajectory_functions");
+
+Eigen::AngleAxisd toAngleAxisd(const KDL::Frame& frame)
+{
+  Eigen::Isometry3d isometry;
+  std::copy_n(frame.M.data, 9, isometry.data());
+  return Eigen::AngleAxisd{ isometry.rotation() };
 }
+
+}  // Anonymous namespace.
 
 bool pilz_industrial_motion_planner::computePoseIK(const planning_scene::PlanningSceneConstPtr& scene,
                                                    const std::string& group_name, const std::string& link_name,
@@ -245,6 +253,126 @@ bool pilz_industrial_motion_planner::generateJointTrajectory(
 
     if (!computePoseIK(scene, group_name, link_name, pose_sample, robot_model->getModelFrame(), ik_solution_last,
                        ik_solution, check_self_collision))
+    {
+      RCLCPP_ERROR(LOGGER, "Failed to compute inverse kinematics solution for sampled Cartesian pose.");
+      error_code.val = moveit_msgs::msg::MoveItErrorCodes::NO_IK_SOLUTION;
+      joint_trajectory.points.clear();
+      return false;
+    }
+
+    // check the joint limits
+    double duration_current_sample = sampling_time;
+    // last interval can be shorter than the sampling time
+    if (time_iter == (time_samples.end() - 1) && time_samples.size() > 1)
+    {
+      duration_current_sample = *time_iter - *(time_iter - 1);
+    }
+    if (time_samples.size() == 1)
+    {
+      duration_current_sample = *time_iter;
+    }
+
+    // skip the first sample with zero time from start for limits checking
+    if (time_iter != time_samples.begin() &&
+        !verifySampleJointLimits(ik_solution_last, joint_velocity_last, ik_solution, sampling_time,
+                                 duration_current_sample, joint_limits))
+    {
+      RCLCPP_ERROR_STREAM(LOGGER, "Inverse kinematics solution at "
+                                      << *time_iter
+                                      << "s violates the joint velocity/acceleration/deceleration limits.");
+      error_code.val = moveit_msgs::msg::MoveItErrorCodes::PLANNING_FAILED;
+      joint_trajectory.points.clear();
+      return false;
+    }
+
+    // fill the point with joint values
+    trajectory_msgs::msg::JointTrajectoryPoint point;
+
+    // set joint names
+    joint_trajectory.joint_names.clear();
+    for (const auto& start_joint : initial_joint_position)
+    {
+      joint_trajectory.joint_names.push_back(start_joint.first);
+    }
+
+    point.time_from_start = rclcpp::Duration::from_seconds(*time_iter);
+    for (const auto& joint_name : joint_trajectory.joint_names)
+    {
+      point.positions.push_back(ik_solution.at(joint_name));
+
+      if (time_iter != time_samples.begin() && time_iter != time_samples.end() - 1)
+      {
+        double joint_velocity =
+            (ik_solution.at(joint_name) - ik_solution_last.at(joint_name)) / duration_current_sample;
+        point.velocities.push_back(joint_velocity);
+        point.accelerations.push_back((joint_velocity - joint_velocity_last.at(joint_name)) /
+                                      (duration_current_sample + sampling_time) * 2);
+        joint_velocity_last[joint_name] = joint_velocity;
+      }
+      else
+      {
+        point.velocities.push_back(0.);
+        point.accelerations.push_back(0.);
+        joint_velocity_last[joint_name] = 0.;
+      }
+    }
+
+    // update joint trajectory
+    joint_trajectory.points.push_back(point);
+    ik_solution_last = ik_solution;
+  }
+
+  error_code.val = moveit_msgs::msg::MoveItErrorCodes::SUCCESS;
+  double duration_ms = (clock.now() - generation_begin).seconds() * 1000;
+  RCLCPP_DEBUG_STREAM(LOGGER, "Generate trajectory (N-Points: "
+                                  << joint_trajectory.points.size() << ") took " << duration_ms << " ms | "
+                                  << duration_ms / joint_trajectory.points.size() << " ms per Point");
+
+  return true;
+}
+
+bool pilz_industrial_motion_planner::generateJointTrajectory(
+    const planning_scene::PlanningSceneConstPtr& scene,
+    const pilz_industrial_motion_planner::JointLimitsContainer& joint_limits, const KDL::Trajectory& trajectory,
+    const std::string& group_name, const std::string& link_name,
+    const std::map<std::string, double>& initial_joint_position,
+    const std::map<std::string, double>& final_joint_position, const double& sampling_time,
+    trajectory_msgs::msg::JointTrajectory& joint_trajectory, moveit_msgs::msg::MoveItErrorCodes& error_code,
+    bool check_self_collision)
+{
+  RCLCPP_DEBUG(LOGGER, "Generate joint trajectory from a Cartesian trajectory.");
+
+  const moveit::core::RobotModelConstPtr& robot_model = scene->getRobotModel();
+  rclcpp::Clock clock;
+  rclcpp::Time generation_begin = clock.now();
+
+  // generate the time samples
+  const double epsilon = 1e-5;  // avoid adding the last time sample twice
+  std::vector<double> time_samples;
+  for (double t_sample = 0.0; t_sample < trajectory.Duration() - epsilon; t_sample += sampling_time)
+  {
+    time_samples.push_back(t_sample);
+  }
+  time_samples.push_back(trajectory.Duration());
+
+  // sample the trajectory and solve the inverse kinematics
+  Eigen::Isometry3d pose_sample;
+  std::map<std::string, double> ik_solution_last;
+  std::map<std::string, double> joint_velocity_last;
+  for (const auto& [joint_name, _] : initial_joint_position)
+  {
+    joint_velocity_last[joint_name] = 0.0;
+  }
+
+  for (std::vector<double>::const_iterator time_iter = time_samples.begin(); time_iter != time_samples.end();
+       ++time_iter)
+  {
+    tf2::transformKDLToEigen(trajectory.Pos(*time_iter), pose_sample);
+    const auto seed = interpolateJointPosition(initial_joint_position, final_joint_position, trajectory.Pos(0),
+                                               trajectory.Pos(trajectory.Duration()), trajectory.Pos(*time_iter));
+    std::map<std::string, double> ik_solution;
+    if (!computePoseIK(scene, group_name, link_name, pose_sample, robot_model->getModelFrame(), seed, ik_solution,
+                       check_self_collision))
     {
       RCLCPP_ERROR(LOGGER, "Failed to compute inverse kinematics solution for sampled Cartesian pose.");
       error_code.val = moveit_msgs::msg::MoveItErrorCodes::NO_IK_SOLUTION;
@@ -628,4 +756,35 @@ Eigen::Isometry3d getConstraintPose(const moveit_msgs::msg::Constraints& goal)
   return getConstraintPose(goal.position_constraints.front().constraint_region.primitive_poses.front().position,
                            goal.orientation_constraints.front().orientation,
                            goal.position_constraints.front().target_point_offset);
+}
+
+std::map<std::string, double>
+pilz_industrial_motion_planner::interpolateJointPosition(const std::map<std::string, double>& initial_joint_position,
+                                                         const std::map<std::string, double>& final_joint_position,
+                                                         const KDL::Frame& initial_pose, const KDL::Frame& final_pose,
+                                                         const KDL::Frame& pose)
+{
+  double interpolation_factor;
+  if ((final_pose.p - initial_pose.p).Norm() < 1e-6)
+  {
+    /* No translation, get the interpolation factor from the rotation. */
+    const auto full_aa = toAngleAxisd(initial_pose.Inverse() * final_pose);
+    const auto partial_aa = toAngleAxisd(initial_pose.Inverse() * pose);
+    interpolation_factor = partial_aa.angle() / full_aa.angle();
+  }
+  else
+  {
+    const auto full_distance = (final_pose.p - initial_pose.p).Norm();
+    const auto partial_distance = (pose.p - initial_pose.p).Norm();
+    interpolation_factor = partial_distance / full_distance;
+  }
+
+  std::map<std::string, double> interpolated_joint_position;
+  for (const auto& [joint_name, initial_joint_value] : initial_joint_position)
+  {
+    const auto final_joint_value = final_joint_position.at(joint_name);
+    interpolated_joint_position[joint_name] =
+        initial_joint_value * (1 - interpolation_factor) + final_joint_value * interpolation_factor;
+  }
+  return interpolated_joint_position;
 }
