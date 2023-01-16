@@ -1,6 +1,7 @@
 /*******************************************************************************
  * BSD 3-Clause License
  *
+ * Copyright (c) 2023, Czech Technical University
  * Copyright (c) 2021, PickNik Robotics
  * All rights reserved.
  *
@@ -31,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-/* Author: Jack Center, Wyatt Rees, Andy Zelenak, Stephanie Eng */
+/* Author: Jack Center, Wyatt Rees, Andy Zelenak, Stephanie Eng, Gaël Écorchard */
 
 #pragma once
 
@@ -48,10 +49,8 @@ public:
   /**
    * \brief Generate a trajectory between two arbitrary states
    */
-  static bool generate(robot_trajectory::RobotTrajectory& trajectory,
-      double sampling_time,
-      double max_velocity_scaling_factor = 1.0,
-      double max_acceleration_scaling_factor = 1.0);
+  static bool generate(robot_trajectory::RobotTrajectory& trajectory, double sampling_time,
+                       double max_velocity_scaling_factor = 1.0, double max_acceleration_scaling_factor = 1.0);
 
 private:
   /**
@@ -60,11 +59,10 @@ private:
    * \param rucking_input   Input parameters to Ruckig.
    * \param ruckig_output   Output from the Ruckig algorithm.
    */
-  static void prepareRuckig(const robot_trajectory::RobotTrajectory& trajectory,
-      double max_velocity_scaling_factor,
-      double max_acceleration_scaling_factor,
-      ruckig::InputParameter<ruckig::DynamicDOFs>& ruckig_input,
-      ruckig::OutputParameter<ruckig::DynamicDOFs>& ruckig_output);
+  static void prepareRuckig(const robot_trajectory::RobotTrajectory& trajectory, double max_velocity_scaling_factor,
+                            double max_acceleration_scaling_factor,
+                            ruckig::InputParameter<ruckig::DynamicDOFs>& ruckig_input,
+                            ruckig::OutputParameter<ruckig::DynamicDOFs>& ruckig_output);
 
   /**
    * \brief Feed previous output back as input for next iteration. Get next target state from the next waypoint.
@@ -91,15 +89,13 @@ private:
                                     const moveit::core::JointModelGroup* joint_group);
 
   static void addWayPoint(robot_trajectory::RobotTrajectory& trajectory,
-                          const ruckig::OutputParameter<ruckig::DynamicDOFs>& ruckig_output,
-                          double time_previous_wp);
+                          const ruckig::OutputParameter<ruckig::DynamicDOFs>& ruckig_output, double time_previous_wp);
 
   /**
    * \brief Compute how long it takes to go from `previous` to `current` with the velocity of `previous`.
    */
   static double getWayPointDurationFromPrevious(const moveit::core::RobotStateConstPtr& previous,
-                                                const moveit::core::RobotStateConstPtr& current,
-                                                double min_duration);
+                                                const moveit::core::RobotStateConstPtr& current, double min_duration);
 };
 
 }  // namespace trajectory_processing
