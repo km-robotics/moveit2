@@ -37,9 +37,16 @@ set(THIS_PACKAGE_LIBRARIES
 )
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
-  pluginlib
+  class_loader
+  kdl_parser
   moveit_core
+  moveit_msgs
   moveit_ros_planning
+  pluginlib
+  random_numbers
+  rclcpp
+  tf2_eigen
+  tf2_kdl
   Boost
 )
 
