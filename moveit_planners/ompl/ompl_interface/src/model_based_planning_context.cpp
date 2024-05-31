@@ -275,7 +275,7 @@ ModelBasedPlanningContext::allocPathConstrainedSampler(const ompl::base::StateSp
 
     if (constraint_sampler)
     {
-      RCLCPP_INFO(getLogger(), "%s: Allocating specialized state sampler for state space", name_.c_str());
+      RCLCPP_DEBUG(getLogger(), "%s: Allocating specialized state sampler for state space", name_.c_str());
       return std::make_shared<ConstrainedSampler>(this, constraint_sampler);
     }
   }

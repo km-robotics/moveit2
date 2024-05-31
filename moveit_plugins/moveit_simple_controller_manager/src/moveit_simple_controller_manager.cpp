@@ -241,7 +241,7 @@ public:
     for (std::map<std::string, ActionBasedControllerHandleBasePtr>::const_iterator it = controllers_.begin();
          it != controllers_.end(); ++it)
       names.push_back(it->first);
-    RCLCPP_INFO_STREAM(getLogger(), "Returned " << names.size() << " controllers in list");
+    RCLCPP_DEBUG_STREAM(getLogger(), "Returned " << names.size() << " controllers in list");
   }
 
   /*
