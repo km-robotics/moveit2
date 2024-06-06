@@ -275,7 +275,7 @@ bool PlanningPipeline::generatePlan(const planning_scene::PlanningSceneConstPtr&
     for (const auto& req_adapter : planning_request_adapter_vector_)
     {
       assert(req_adapter);
-      RCLCPP_INFO(node_->get_logger(), "Calling PlanningRequestAdapter '%s'", req_adapter->getDescription().c_str());
+      RCLCPP_DEBUG(node_->get_logger(), "Calling PlanningRequestAdapter '%s'", req_adapter->getDescription().c_str());
       const auto status = req_adapter->adapt(planning_scene, mutable_request);
       res.error_code = status.val;
       // Publish progress
@@ -315,7 +315,7 @@ bool PlanningPipeline::generatePlan(const planning_scene::PlanningSceneConstPtr&
       }
 
       // Run planner
-      RCLCPP_INFO(node_->get_logger(), "Calling Planner '%s'", planner->getDescription().c_str());
+      RCLCPP_DEBUG(node_->get_logger(), "Calling Planner '%s'", planner->getDescription().c_str());
       context->solve(res);
       publishPipelineState(mutable_request, res, planner->getDescription());
 
@@ -336,7 +336,7 @@ bool PlanningPipeline::generatePlan(const planning_scene::PlanningSceneConstPtr&
       for (const auto& res_adapter : planning_response_adapter_vector_)
       {
         assert(res_adapter);
-        RCLCPP_INFO(node_->get_logger(), "Calling PlanningResponseAdapter '%s'", res_adapter->getDescription().c_str());
+        RCLCPP_DEBUG(node_->get_logger(), "Calling PlanningResponseAdapter '%s'", res_adapter->getDescription().c_str());
         res_adapter->adapt(planning_scene, mutable_request, res);
         publishPipelineState(mutable_request, res, res_adapter->getDescription());
         // If adapter does not succeed, break chain and return false
