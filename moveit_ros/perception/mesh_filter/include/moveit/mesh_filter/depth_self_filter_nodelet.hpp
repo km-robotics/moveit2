@@ -41,7 +41,7 @@
 #include <moveit/mesh_filter/transform_provider.hpp>
 #include <moveit/mesh_filter/mesh_filter.hpp>
 #include <moveit/mesh_filter/stereo_camera_model.hpp>
-#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.hpp>
 #include <memory>
 
 namespace mesh_filter
